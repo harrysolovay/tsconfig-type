@@ -1,34 +1,56 @@
 import * as json2Ts from "json-schema-to-typescript";
 import fs from "fs";
-import https from "https";
 import path from "path";
 import prettier from "prettier";
 import ts from "typescript";
+import https from "https";
+import crypto from "crypto";
 
-import {$schema} from "../tsconfig.json";
-import prettierConfig from "../.prettierrc.json";
+import prettierConfig from "./.prettierrc.json";
+import {$schema} from "./tsconfig.json";
 
-async function main(): Promise<void> {
+async function main(ensureChanged = true): Promise<void> {
     // Fetch the latest schema from schemastore.org.
-    const tsconfigJsonSchema = await new Promise<json2Ts.JSONSchema>((resolve, reject) => {
+    const tsconfigJsonSchemaRaw = await new Promise<string>((resolve, reject) => {
         https.get($schema, (res) => {
-            let chunks = "";
+            let source = "";
             res.on("error", reject)
                 .on("data", (chunk) => {
-                    chunks += chunk.toString();
+                    source += chunk.toString();
                 })
-                .on("close", () => {
-                    resolve(JSON.parse(chunks));
+                .on("close", async () => {
+                    resolve(source);
                 });
         });
     });
 
-    // Offline:
-    // const tsconfigJsonSchema = JSON.parse(
-    //     await fs.promises.readFile(path.join(__dirname, "..", "the_schema.json"), {
-    //         encoding: "utf8",
-    //     }),
-    // );
+    const md5Sum = crypto.createHash("md5");
+    md5Sum.update(tsconfigJsonSchemaRaw);
+    const checksum = md5Sum.digest("hex");
+
+    // Define path to chesum.
+    const checksumFilePath = path.resolve(__dirname, "checksum");
+
+    // Stop computing if nothing has changed since last publish.
+    if (ensureChanged) {
+        // Get previous hash from checksum file.
+        try {
+            const previousHash = await fs.promises.readFile(checksumFilePath, {
+                encoding: "utf8",
+            });
+
+            if (checksum === previousHash) {
+                throw new Error();
+            }
+        } catch (e) {}
+    }
+
+    // Write the new checksum.
+    await fs.promises.writeFile(checksumFilePath, checksum, {
+        encoding: "utf8",
+    });
+
+    const tsconfigJsonSchema: json2Ts.JSONSchema = JSON.parse(tsconfigJsonSchemaRaw);
 
     // Generate TypeScript types and interfaces from the fetched schema.
     // This needs to be transformed to better suit our needs.
@@ -66,7 +88,7 @@ async function main(): Promise<void> {
     } as prettier.Options);
 
     // Write the source to disk.
-    await fs.promises.writeFile(path.join(__dirname, "..", "the_type.ts"), transformedSourceFormatted, {
+    await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, {
         encoding: "utf8",
     });
 }

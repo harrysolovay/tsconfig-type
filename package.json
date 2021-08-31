@@ -1,17 +1,19 @@
 {
     "name": "tsconfig-type",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "description": "",
     "types": "the_type.d.ts",
     "scripts": {
-        "gen": "ts-node gen"
+        "gen": "ts-node gen",
+        "action": "ts-node action"
     },
     "license": "Apache-2.0",
     "devDependencies": {
         "@types/node": "^16.7.1",
+        "@types/semver": "^7.3.8",
         "json-schema-to-typescript": "^10.1.4",
         "prettier": "^2.3.2",
-        "standard-version": "^9.3.1",
+        "semver": "^7.3.5",
         "ts-node": "^10.2.1",
         "typescript": "^4.3.5"
     }
