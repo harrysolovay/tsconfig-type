@@ -104,6 +104,9 @@ async function main(): Promise<void> {
         });
         await sv({
             releaseAs: "minor",
+            skip: {
+                changelog: true,
+            },
         });
         cp.execSync("git push --follow-tags origin main && npm publish", {
             cwd: __dirname,
