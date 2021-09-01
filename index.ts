@@ -1,19 +1,23 @@
-import * as json2Ts from "json-schema-to-typescript";
+import cp from "child_process";
+import crypto from "crypto";
 import fs from "fs";
+import https from "https";
+import * as json2Ts from "json-schema-to-typescript";
 import path from "path";
 import prettier from "prettier";
-import ts from "typescript";
-import https from "https";
-import crypto from "crypto";
 import sv from "standard-version";
-import cp from "child_process";
+import ts from "typescript";
 
 import prettierConfig from "./.prettierrc.json";
-import {$schema} from "./tsconfig.json";
 import {checksum as previousChecksum} from "./checksum.json";
+import {$schema} from "./tsconfig.json";
 
 async function main(): Promise<void> {
-    const inDevelopment = await (async (): Promise<boolean> => {
+    // When running the `dev` script, a temporary `dev` file is touched in the project root.
+    // When running the `prod` script, the file is deleted.
+    // Therefore, `inDevelopment` should contain which mode we're currently running.
+    // This enables us to prevent version bumps, commits, tagging, etc. (further down in this body).
+    const devMode = await (async (): Promise<boolean> => {
         try {
             await fs.promises.stat(path.resolve(__dirname, "dev"));
             return true;
@@ -69,8 +73,8 @@ async function main(): Promise<void> {
         parser: "typescript",
     });
 
-    if (!inDevelopment) {
-        // Create hash of the final source.
+    if (!devMode) {
+        // Create checksum of the final source.
         const hasher = crypto.createHash("md5");
         hasher.update(transformedSourceFormatted);
         const checksum = hasher.digest("hex");
@@ -80,7 +84,7 @@ async function main(): Promise<void> {
             throw new Error("Already released this version.");
         }
 
-        // Write out new checksum for use in subsequent run.
+        // Write out new checksum for use in subsequent run. This gets committed.
         await fs.promises.writeFile(
             path.resolve(__dirname, "checksum.json"),
             JSON.stringify({
@@ -93,25 +97,38 @@ async function main(): Promise<void> {
     // Write the source to disk.
     await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, "utf8");
 
-    if (!inDevelopment) {
+    if (!devMode) {
         // prettier-ignore
         [
+            // Is hardcoding this blasphemous? If so, please file an issue and tell me I'm a buffoon.
             'git config --global user.email "harrysolovay@gmail.com"',
             'git config --global user.name "Harry Solovay"',
+            // Even though the only change is the `package.json`...
             "git add .",
-            "git commit -m 'feat: unknown – regenerating from schemastore.org'"
+            // Can be a chore since we force a minor version bump below.
+            // Message kind is therefore irrelevant.
+            "git commit -m 'chore: unknown – regenerating from schemastore.org'"
         ].forEach((command) => {
             cp.execSync(command, {
                 cwd: __dirname,
                 stdio: "inherit",
             });
         });
+
+        // Bump the version and skip changelog generation. We skip the changelog generation because it wouldn't contain
+        // any particularly meaningful messages. The artifacts that users care about are generated, not hand-written).
+        // Although, one could argue that we should have a changelog of generation-related changes. This would be done
+        // via a different tool than `standard-version`, however. Out of scope for now. Might want to do this in an issue
+        // that I keep forever open.
         await sv({
             releaseAs: "minor",
             skip: {
                 changelog: true,
             },
         });
+
+        // Everything is committed, `standard-version` has bumped the version and tagged the latest commit. We're ready to
+        // push the changes. This is happening inside of the CI/CD environment.
         cp.execSync("git push --follow-tags origin main", {
             cwd: __dirname,
             stdio: "inherit",
@@ -153,8 +170,11 @@ const renameTsconfigTypeAndRemoveOtherExports: ts.TransformerFactory<ts.Node> = 
         sourceFile,
         (statement) => {
             if (ts.isTypeAliasDeclaration(statement)) {
+                // Return the same node but with the new identifier.
                 return ts.factory.updateTypeAliasDeclaration(statement, statement.decorators, statement.modifiers, ts.factory.createIdentifier("Tsconfig"), statement.typeParameters, statement.type);
-            } else if (ts.isInterfaceDeclaration(statement)) {
+            }
+            if (ts.isInterfaceDeclaration(statement)) {
+                // Return the same nodes but without any export modifiers.
                 return ts.factory.updateInterfaceDeclaration(
                     statement,
                     statement.decorators,
@@ -295,8 +315,14 @@ function removeUnknownIndexSignatures(ctx: ts.TransformationContext) {
         return ts.visitEachChild(
             node,
             (child) => {
+                // If we're currently visiting an interface declaration or type literal...
                 if (ts.isInterfaceDeclaration(child) || ts.isTypeLiteralNode(child)) {
-                    const nextMembers = child.members.reduce((acc, cur, i): ts.TypeElement[] => {
+                    // Filter out members which match the following conditions:
+                    // 1. Is an index signature declaration.
+                    // 2. Has `string` as the index signature.
+                    // 3. Has `unknown` as the value.
+                    // 4. Has no sibling fields.
+                    const keep = child.members.reduce((acc, cur, i): ts.TypeElement[] => {
                         if (ts.isIndexSignatureDeclaration(cur) && cur.parameters[0]?.type?.kind === ts.SyntaxKind.StringKeyword && cur.type.kind === ts.SyntaxKind.UnknownKeyword && (child.members[i - 1] || child.members[i + 1])) {
                             return acc;
                         }
@@ -306,11 +332,12 @@ function removeUnknownIndexSignatures(ctx: ts.TransformationContext) {
                         }
                         return acc;
                     }, [] as ts.TypeElement[]);
+                    // Update node with the filtered members.
                     if (ts.isInterfaceDeclaration(child)) {
-                        return ts.factory.updateInterfaceDeclaration(child, undefined, undefined, child.name, undefined, undefined, nextMembers);
+                        return ts.factory.updateInterfaceDeclaration(child, child.decorators, child.modifiers, child.name, child.typeParameters, child.heritageClauses, keep);
                     }
                     if (ts.isTypeLiteralNode(child)) {
-                        return ts.factory.updateTypeLiteralNode(child, ts.factory.createNodeArray(nextMembers));
+                        return ts.factory.updateTypeLiteralNode(child, ts.factory.createNodeArray(keep));
                     }
                 }
                 return removeUnknownIndexSignatures(ctx)(child);
