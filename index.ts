@@ -103,7 +103,7 @@ async function main(): Promise<void> {
             stdio: "inherit",
         });
         sv({
-            packageFiles: ["package.json"],
+            releaseAs: "minor",
         });
         cp.execSync("git push --follow-tags origin main && npm publish", {
             cwd: __dirname,
