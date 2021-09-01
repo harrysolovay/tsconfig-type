@@ -23,5 +23,5 @@
         "typeRoots": ["node_modules/@types"]
     },
     "exclude": ["node_modules"],
-    "include": [".prettierrc.json", "action.ts", "gen.ts", "tsconfig.json", "util.ts"]
+    "include": [".prettierrc.json", "checksum.json", "gen.ts", "tsconfig.json"]
 }

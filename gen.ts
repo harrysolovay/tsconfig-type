@@ -5,13 +5,25 @@ import prettier from "prettier";
 import ts from "typescript";
 import https from "https";
 import crypto from "crypto";
+import sv from "standard-version";
+import cp from "child_process";
 
 import prettierConfig from "./.prettierrc.json";
 import {$schema} from "./tsconfig.json";
+import {checksum as previousChecksum} from "./checksum.json";
 
-async function main(ensureChanged = true): Promise<void> {
+// Define a reusable format fn (first we get rid of plugin-specific options, which would cause the process to fail).
+const {importOrder: _0, importOrderSeparation: _1, ...nativePrettierConfig} = prettierConfig;
+function format(source: string, parser: prettier.Options["parser"]): string {
+    return prettier.format(source, {
+        ...(nativePrettierConfig as prettier.Options),
+        parser,
+    });
+}
+
+async function main(): Promise<void> {
     // Fetch the latest schema from schemastore.org.
-    const tsconfigJsonSchemaRaw = await new Promise<string>((resolve, reject) => {
+    const tsconfigJsonSchema = await new Promise<json2Ts.JSONSchema>((resolve, reject) => {
         https.get($schema, (res) => {
             let source = "";
             res.on("error", reject)
@@ -19,78 +31,69 @@ async function main(ensureChanged = true): Promise<void> {
                     source += chunk.toString();
                 })
                 .on("close", async () => {
-                    resolve(source);
+                    resolve(JSON.parse(source));
                 });
         });
     });
 
-    const md5Sum = crypto.createHash("md5");
-    md5Sum.update(tsconfigJsonSchemaRaw);
-    const checksum = md5Sum.digest("hex");
-
-    // Define path to chesum.
-    const checksumFilePath = path.resolve(__dirname, "checksum");
-
-    // Stop computing if nothing has changed since last publish.
-    if (ensureChanged) {
-        // Get previous hash from checksum file.
-        try {
-            const previousHash = await fs.promises.readFile(checksumFilePath, {
-                encoding: "utf8",
-            });
-
-            if (checksum === previousHash) {
-                throw new Error();
-            }
-        } catch (e) {}
-    }
-
-    // Write the new checksum.
-    await fs.promises.writeFile(checksumFilePath, checksum, {
-        encoding: "utf8",
-    });
-
-    const tsconfigJsonSchema: json2Ts.JSONSchema = JSON.parse(tsconfigJsonSchemaRaw);
-
     // Generate TypeScript types and interfaces from the fetched schema.
-    // This needs to be transformed to better suit our needs.
+    // This needs to be transformed to better suit our needs (TypeScript transformer below).
     const json2TsResult = await json2Ts.compile(tsconfigJsonSchema, "Tsconfig", {
         bannerComment: "/**\n * THIS FILE WAS GENERATED. BE WARY OF EDITING BY HAND.\n */",
     });
 
     // Create a source file from the `json-schema-to-typescript` result.
-    const initialSourceFile = ts.createSourceFile("tsconfig_type.d.ts", json2TsResult, ts.ScriptTarget.ES2018, true);
+    const initialSourceFile = ts.createSourceFile("tsconfig_type.d.ts", json2TsResult, ts.ScriptTarget.ES2018);
 
     // Transform the source file.
-    const transformResult = ts.transform(initialSourceFile, [transformer]);
+    const transformedSourceFile = ts.transform(initialSourceFile, [transformer]).transformed[0];
 
-    // Get the transformed source file & ensure not undefined.
-    const transformedSourceFile = transformResult.transformed[0];
+    // Ensure the transformed source file is defined.
     if (!transformedSourceFile) {
-        throw new Error();
+        throw new Error("Could not access transformed source file.");
     }
 
-    // Instantiate a printer.
-    const printer = ts.createPrinter({
-        noEmitHelpers: true,
-        omitTrailingSemicolon: false,
-        removeComments: false,
-    });
-
     // Print the transformed source file.
-    const transformedSource = printer.printFile(transformedSourceFile);
+    const transformedSource = ts
+        .createPrinter({
+            noEmitHelpers: true,
+            omitTrailingSemicolon: false,
+            removeComments: false,
+        })
+        .printFile(transformedSourceFile);
 
-    // Format the transformed source (first we get rid of plugin-specific options that would cause the process to fail).
-    const {importOrder: _0, importOrderSeparation: _1, ...nativePrettierConfig} = prettierConfig;
-    const transformedSourceFormatted = prettier.format(transformedSource, {
-        ...nativePrettierConfig,
-        parser: "typescript",
-    } as prettier.Options);
+    const transformedSourceFormatted = format(transformedSource, "typescript");
+
+    // Create hash of the final source.
+    const hasher = crypto.createHash("md5");
+    hasher.update(transformedSourceFormatted);
+    const checksum = hasher.digest("hex");
+
+    // Compare checksums.
+    if (checksum === previousChecksum) {
+        throw new Error("Already released this version.");
+    }
+
+    // Write out new checksum for use in subsequent run.
+    await fs.promises.writeFile(
+        path.resolve(__dirname, "checksum.json"),
+        JSON.stringify({
+            checksum,
+        }),
+        "utf8",
+    );
+
+    // Update the `package.json` with a minor-bumped version.
+    cp.execSync("git add .", {
+        cwd: __dirname,
+    });
+    cp.execSync("git commit -m 'feat: unknown – regenerating from schemastore.org'", {
+        cwd: __dirname,
+    });
+    sv({});
 
     // Write the source to disk.
-    await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, {
-        encoding: "utf8",
-    });
+    await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, "utf8");
 }
 
 // Our main transformer is composed of the following transformers.

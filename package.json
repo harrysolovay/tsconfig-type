@@ -1,19 +1,20 @@
 {
     "name": "tsconfig-type",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "",
     "types": "the_type.d.ts",
     "scripts": {
-        "gen": "ts-node gen",
-        "action": "ts-node action"
+        "reset_checksum": "echo '{\"checksum\": \"\"}' > checksum.json",
+        "gen": "npm run reset_checksum && ts-node gen"
     },
     "license": "Apache-2.0",
     "devDependencies": {
         "@types/node": "^16.7.1",
         "@types/semver": "^7.3.8",
+        "@types/standard-version": "^7.0.1",
         "json-schema-to-typescript": "^10.1.4",
         "prettier": "^2.3.2",
-        "semver": "^7.3.5",
+        "standard-version": "^9.3.1",
         "ts-node": "^10.2.1",
         "typescript": "^4.3.5"
     }
