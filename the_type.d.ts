@@ -3,7 +3,7 @@
  */
 export type Tsconfig = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition | ExcludeDefinition | IncludeDefinition | ReferencesDefinition);
 export interface CompilerOptionsDefinition {
-    $schema?: string;
+    $schema?: "https://json.schemastore.org/tsconfig.json";
     /**
      * Instructs the TypeScript compiler how to compile .ts files.
      */

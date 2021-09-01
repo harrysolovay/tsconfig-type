@@ -168,7 +168,7 @@ const attachSchemaPropToTopLevel: ts.TransformerFactory<ts.Node> = (ctx) => (sou
         (statement) => {
             if (ts.isInterfaceDeclaration(statement) && statement.name.text === "CompilerOptionsDefinition") {
                 // console.log(ts.SyntaxKind[statement.members[0]!.kind]);
-                return ts.factory.updateInterfaceDeclaration(statement, statement.decorators, statement.modifiers, statement.name, statement.typeParameters, statement.heritageClauses, ts.factory.createNodeArray([ts.factory.createPropertySignature(undefined, ts.factory.createIdentifier("$schema"), ts.factory.createToken(ts.SyntaxKind.QuestionToken), ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)), ...statement.members]));
+                return ts.factory.updateInterfaceDeclaration(statement, statement.decorators, statement.modifiers, statement.name, statement.typeParameters, statement.heritageClauses, ts.factory.createNodeArray([ts.factory.createPropertySignature(undefined, ts.factory.createIdentifier("$schema"), ts.factory.createToken(ts.SyntaxKind.QuestionToken), ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral("https://json.schemastore.org/tsconfig.json", false))), ...statement.members]));
             }
             return statement;
         },
