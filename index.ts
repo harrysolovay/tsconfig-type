@@ -94,17 +94,18 @@ async function main(): Promise<void> {
     await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, "utf8");
 
     if (!inDevelopment) {
-        // Add and commit changes.
         cp.execSync("git add .", {
             cwd: __dirname,
+            stdio: "inherit",
         });
         cp.execSync("git commit -m 'feat: unknown – regenerating from schemastore.org'", {
             cwd: __dirname,
+            stdio: "inherit",
         });
-        // Execute standard version.
         sv({});
         cp.execSync("git push --follow-tags origin main && npm publish", {
             cwd: __dirname,
+            stdio: "inherit",
         });
     }
 }
