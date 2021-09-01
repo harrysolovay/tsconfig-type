@@ -1,7 +1,7 @@
-    /**
+/**
  * THIS FILE WAS GENERATED. BE WARY OF EDITING BY HAND.
  */
-export type JSONSchemaForTheTypeScriptCompilerSConfigurationFile = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition | ExcludeDefinition | IncludeDefinition | ReferencesDefinition);
+export type Tsconfig = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition | ExcludeDefinition | IncludeDefinition | ReferencesDefinition);
 interface CompilerOptionsDefinition {
     /**
      * Instructs the TypeScript compiler how to compile .ts files.

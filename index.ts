@@ -12,9 +12,16 @@ import prettierConfig from "./.prettierrc.json";
 import {$schema} from "./tsconfig.json";
 import {checksum as previousChecksum} from "./checksum.json";
 
-const inDevelopment = true;
-
 async function main(): Promise<void> {
+    const inDevelopment = await (async (): Promise<boolean> => {
+        try {
+            await fs.promises.stat(path.resolve(__dirname, "dev"));
+            return true;
+        } catch (e) {
+            return false;
+        }
+    })();
+
     // Fetch the latest schema from schemastore.org.
     const tsconfigJsonSchema = await new Promise<json2Ts.JSONSchema>((resolve, reject) => {
         https.get($schema, (res) => {
@@ -106,8 +113,7 @@ async function main(): Promise<void> {
 function getTransformerFactories(): ts.TransformerFactory<ts.Node>[] {
     // prettier-ignore
     return [
-        renameTsconfigType,
-        removeAllExportsExceptTsconfig,
+        renameTsconfigTypeAndRemoveOtherExports,
         removeStandaloneUnknownRecsInUnions,
         removeStringMergedWithStringLiterals,
         removeUnknownIndexSignatures,
@@ -125,13 +131,14 @@ const transformer: ts.TransformerFactory<ts.SourceFile> = (ctx) => (sourceFile) 
     }, sourceFile);
 };
 
-// Renames the following type to `Tsconfig`.
+// Removes export modifiers from all statements except for the `Tsconfig` type alias declaration.
+// Also renames the following type to `Tsconfig`.
 //
 // ```
 // export type JSONSchemaForTheTypeScriptCompilerSConfigurationFile = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition | ExcludeDefinition | IncludeDefinition | ReferencesDefinition);
 // ```
 
-const renameTsconfigType: ts.TransformerFactory<ts.Node> = (ctx) => (sourceFile) => {
+const renameTsconfigTypeAndRemoveOtherExports: ts.TransformerFactory<ts.Node> = (ctx) => (sourceFile) => {
     return ts.visitEachChild(
         sourceFile,
         (statement) => {
