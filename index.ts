@@ -94,13 +94,11 @@ async function main(): Promise<void> {
     await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, "utf8");
 
     if (!inDevelopment) {
-        cp.execSync("git add .", {
-            cwd: __dirname,
-            stdio: "inherit",
-        });
-        cp.execSync("git commit -m 'feat: unknown – regenerating from schemastore.org'", {
-            cwd: __dirname,
-            stdio: "inherit",
+        ['git config --global user.email "harrysolovay@gmail.com"', 'git config --global user.name "Harry Solovay"', "git add .", "git commit -m 'feat: unknown – regenerating from schemastore.org'"].forEach((command) => {
+            cp.execSync(command, {
+                cwd: __dirname,
+                stdio: "inherit",
+            });
         });
         await sv({
             releaseAs: "minor",
