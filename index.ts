@@ -62,7 +62,7 @@ async function main(): Promise<void> {
         })
         .printFile(transformedSourceFile);
 
-    // Make it pretty.
+    // Format the final source.
     const {importOrder: _0, importOrderSeparation: _1, ...nativePrettierConfig} = prettierConfig;
     const transformedSourceFormatted = prettier.format(transformedSource, {
         ...(nativePrettierConfig as prettier.Options),
