@@ -7,7 +7,7 @@
         "reset_checksum": "echo '{\"checksum\": \"\"}' > checksum.json",
         "ex": "node -r @swc-node/register index.ts",
         "dev": "npm run reset_checksum && echo \"\" > dev && npm run ex",
-        "prod": "rm dev && npm run ex"
+        "prod": "rm dev || true && npm run ex"
     },
     "license": "Apache-2.0",
     "devDependencies": {
