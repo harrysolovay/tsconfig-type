@@ -140,6 +140,7 @@ async function main(): Promise<void> {
 function getTransformerFactories(): ts.TransformerFactory<ts.Node>[] {
     // prettier-ignore
     return [
+        attachSchemaPropToTopLevel,
         renameTsconfigTypeAndRemoveOtherExports,
         removeStandaloneUnknownRecsInUnions,
         removeStringMergedWithStringLiterals,
@@ -156,6 +157,23 @@ const transformer: ts.TransformerFactory<ts.SourceFile> = (ctx) => (sourceFile) 
         }
         return nextResult;
     }, sourceFile);
+};
+
+// Adds `$schema?: string` field to the `CompilerOptionsDefinition` interface.
+// ^ this isn't a standard `tsconfig.json` field, but it is a standard `package.json` field,
+// and is essential for JSON LSPs outside of VSCode.
+const attachSchemaPropToTopLevel: ts.TransformerFactory<ts.Node> = (ctx) => (sourceFile) => {
+    return ts.visitEachChild(
+        sourceFile,
+        (statement) => {
+            if (ts.isInterfaceDeclaration(statement) && statement.name.text === "CompilerOptionsDefinition") {
+                // console.log(ts.SyntaxKind[statement.members[0]!.kind]);
+                return ts.factory.updateInterfaceDeclaration(statement, statement.decorators, statement.modifiers, statement.name, statement.typeParameters, statement.heritageClauses, ts.factory.createNodeArray([ts.factory.createPropertySignature(undefined, ts.factory.createIdentifier("$schema"), ts.factory.createToken(ts.SyntaxKind.QuestionToken), ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)), ...statement.members]));
+            }
+            return statement;
+        },
+        ctx,
+    );
 };
 
 // Removes export modifiers from all statements except for the `Tsconfig` type alias declaration.
