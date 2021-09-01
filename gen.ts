@@ -83,13 +83,14 @@ async function main(): Promise<void> {
         "utf8",
     );
 
-    // Update the `package.json` with a minor-bumped version.
+    // Add and commit changes.
     cp.execSync("git add .", {
         cwd: __dirname,
     });
     cp.execSync("git commit -m 'feat: unknown – regenerating from schemastore.org'", {
         cwd: __dirname,
     });
+    // Execute standard version.
     sv({});
 
     // Write the source to disk.
