@@ -112,7 +112,7 @@ async function main(): Promise<void> {
                 changelog: true,
             },
         });
-        cp.execSync("git push --follow-tags origin main && npm publish", {
+        cp.execSync("git push --follow-tags origin main", {
             cwd: __dirname,
             stdio: "inherit",
         });

@@ -14,3 +14,6 @@ jobs:
       - uses: actions/setup-node@v2
       - run: npm i
       - run: npm run prod
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
