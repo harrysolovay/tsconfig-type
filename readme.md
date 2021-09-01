@@ -4,18 +4,18 @@ A `tsconfig.json` type, regularly regenerated and published from the schemastore
 
 ## Installation
 
-```
+```sh
 npm i tsconfig-type
 ```
 
 ## Usage
 
-```
-import {Tsconfig} from "tsconfig-type"
+```ts
+import {Tsconfig} from "tsconfig-type";
 
 const tsconfig: Tsconfig = {
-	// ...
-}
+    // ...
+};
 ```
 
 ## Rationale
