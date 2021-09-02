@@ -10,7 +10,7 @@
         "access": "public"
     },
     "files": [
-        "index.d.ts",
+        "the_type.d.ts",
         "readme.md"
     ],
     "description": "An always up-to-date tsconfig.json type, transformed from its JSON Schema Store definition",
