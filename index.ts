@@ -176,6 +176,7 @@ const attachSchemaPropToTopLevel: ts.TransformerFactory<ts.Node> = (ctx) => (sou
 };
 
 // Recursively turns any union type nodes into intersection nodes.
+// This is to be used in `renameTsconfigTypeForceIntersectionsRemoveOtherExports`
 const unionsToIntersections: ts.TransformerFactory<ts.Node> = (ctx) => (node) => {
     return ts.visitEachChild(
         node,
