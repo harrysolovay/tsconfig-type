@@ -1,7 +1,7 @@
 /**
  * THIS FILE WAS GENERATED. BE WARY OF EDITING BY HAND.
  */
-export type Tsconfig = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition | ExcludeDefinition | IncludeDefinition | ReferencesDefinition);
+export type Tsconfig = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition & ExcludeDefinition & IncludeDefinition & ReferencesDefinition);
 export interface CompilerOptionsDefinition {
     $schema?: "https://json.schemastore.org/tsconfig.json";
     /**

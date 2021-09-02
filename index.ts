@@ -141,7 +141,7 @@ function getTransformerFactories(): ts.TransformerFactory<ts.Node>[] {
     // prettier-ignore
     return [
         attachSchemaPropToTopLevel,
-        renameTsconfigTypeAndRemoveOtherExports,
+        renameTsconfigTypeForceIntersectionsRemoveOtherExports,
         removeStandaloneUnknownRecsInUnions,
         removeStringMergedWithStringLiterals,
         removeUnknownIndexSignatures,
@@ -167,7 +167,6 @@ const attachSchemaPropToTopLevel: ts.TransformerFactory<ts.Node> = (ctx) => (sou
         sourceFile,
         (statement) => {
             if (ts.isInterfaceDeclaration(statement) && statement.name.text === "CompilerOptionsDefinition") {
-                // console.log(ts.SyntaxKind[statement.members[0]!.kind]);
                 return ts.factory.updateInterfaceDeclaration(statement, statement.decorators, statement.modifiers, statement.name, statement.typeParameters, statement.heritageClauses, ts.factory.createNodeArray([ts.factory.createPropertySignature(undefined, ts.factory.createIdentifier("$schema"), ts.factory.createToken(ts.SyntaxKind.QuestionToken), ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral("https://json.schemastore.org/tsconfig.json", false))), ...statement.members]));
             }
             return statement;
@@ -176,20 +175,37 @@ const attachSchemaPropToTopLevel: ts.TransformerFactory<ts.Node> = (ctx) => (sou
     );
 };
 
-// Removes export modifiers from all statements except for the `Tsconfig` type alias declaration.
-// Also renames the following type to `Tsconfig`.
+// Recursively turns any union type nodes into intersection nodes.
+const unionsToIntersections: ts.TransformerFactory<ts.Node> = (ctx) => (node) => {
+    return ts.visitEachChild(
+        node,
+        (child) => {
+            if (ts.isUnionTypeNode(child)) {
+                const types = child.types.map((type) => {
+                    return unionsToIntersections(ctx)(type);
+                }) as ts.TypeNode[];
+                return ts.factory.createIntersectionTypeNode(types);
+            }
+            return unionsToIntersections(ctx)(child);
+        },
+        ctx,
+    );
+};
+
+// 1. Removes export modifiers from all statements except for the `Tsconfig` type alias declaration.
+// 2. Renames the following type to `Tsconfig`.
+// 3. Turns the `Tsconfig` type's child unions into intersections.
 //
 // ```
 // export type JSONSchemaForTheTypeScriptCompilerSConfigurationFile = CompilerOptionsDefinition & CompileOnSaveDefinition & TypeAcquisitionDefinition & ExtendsDefinition & WatchOptionsDefinition & BuildOptionsDefinition & TsNodeDefinition & (FilesDefinition | ExcludeDefinition | IncludeDefinition | ReferencesDefinition);
 // ```
-
-const renameTsconfigTypeAndRemoveOtherExports: ts.TransformerFactory<ts.Node> = (ctx) => (sourceFile) => {
+const renameTsconfigTypeForceIntersectionsRemoveOtherExports: ts.TransformerFactory<ts.Node> = (ctx) => (sourceFile) => {
     return ts.visitEachChild(
         sourceFile,
         (statement) => {
             if (ts.isTypeAliasDeclaration(statement)) {
                 // Return the same node but with the new identifier.
-                return ts.factory.updateTypeAliasDeclaration(statement, statement.decorators, statement.modifiers, ts.factory.createIdentifier("Tsconfig"), statement.typeParameters, statement.type);
+                return ts.factory.updateTypeAliasDeclaration(statement, statement.decorators, statement.modifiers, ts.factory.createIdentifier("Tsconfig"), statement.typeParameters, unionsToIntersections(ctx)(statement.type) as ts.TypeNode);
             }
             if (ts.isInterfaceDeclaration(statement)) {
                 // Return the same nodes but without any export modifiers.
@@ -365,4 +381,5 @@ function removeUnknownIndexSignatures(ctx: ts.TransformationContext) {
     };
 }
 
+main();
 main();
