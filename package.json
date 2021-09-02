@@ -1,7 +1,7 @@
 {
     "$schema": "https://json.schemastore.org/package",
     "name": "tsconfig-type",
-    "version": "1.12.0",
+    "version": "1.13.0",
     "license": "Apache-2.0",
     "types": "the_type.d.ts",
     "sideEffects": false,
