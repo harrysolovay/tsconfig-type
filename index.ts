@@ -98,7 +98,6 @@ async function main(): Promise<void> {
     await fs.promises.writeFile(path.join(__dirname, "the_type.d.ts"), transformedSourceFormatted, "utf8");
 
     if (!devMode) {
-        // prettier-ignore
         [
             // Is hardcoding this blasphemous? If so, please file an issue and tell me I'm a buffoon.
             'git config --global user.email "harrysolovay@gmail.com"',
@@ -107,7 +106,7 @@ async function main(): Promise<void> {
             "git add .",
             // Can be a chore since we force a minor version bump below.
             // Message kind is therefore irrelevant.
-            "git commit -m 'chore: unknown – regenerating from schemastore.org'"
+            "git commit -m 'chore: unknown – regenerating from schemastore.org'",
         ].forEach((command) => {
             cp.execSync(command, {
                 cwd: __dirname,
@@ -138,14 +137,7 @@ async function main(): Promise<void> {
 
 // Our main transformer is composed of the following transformers.
 function getTransformerFactories(): ts.TransformerFactory<ts.Node>[] {
-    // prettier-ignore
-    return [
-        attachSchemaPropToTopLevel,
-        renameTsconfigTypeForceIntersectionsRemoveOtherExports,
-        removeStandaloneUnknownRecsInUnions,
-        removeStringMergedWithStringLiterals,
-        removeUnknownIndexSignatures,
-    ];
+    return [attachSchemaPropToTopLevel, renameTsconfigTypeForceIntersectionsRemoveOtherExports, removeStandaloneUnknownRecsInUnions, removeStringMergedWithStringLiterals, removeUnknownIndexSignatures];
 }
 
 // This is our main transformer.
