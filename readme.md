@@ -1,6 +1,6 @@
 # Tsconfig Type
 
-A `tsconfig.json` type, regularly regenerated and published from [the schemastore.org definition](https://json.schemastore.org/tsconfig.json).
+A `tsconfig.json` type, regularly regenerated based on [the schemastore.org definition](https://json.schemastore.org/tsconfig.json).
 
 ## Installation
 
