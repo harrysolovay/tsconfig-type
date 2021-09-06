@@ -375,4 +375,3 @@ function removeUnknownIndexSignatures(ctx: ts.TransformationContext) {
 }
 
 main();
-main();
