@@ -95,11 +95,11 @@ export interface CompilerOptionsDefinition {
         /**
          * Specify what module code is generated.
          */
-        module?: "CommonJS" | "AMD" | "System" | "UMD" | "ES6" | "ES2015" | "ES2020" | "ESNext" | "None" | "ES2022" | "Node12" | "NodeNext";
+        module?: "CommonJS" | "AMD" | "System" | "UMD" | "ES6" | "ES2015" | "ES2020" | "ESNext" | "None" | "ES2022" | "Node16" | "NodeNext";
         /**
          * Specify how TypeScript looks up a file from a given module specifier.
          */
-        moduleResolution?: "Classic" | "Node" | "Node12" | "NodeNext";
+        moduleResolution?: "Classic" | "Node" | "Node16" | "NodeNext";
         /**
          * Set the newline character for emitting files.
          */
@@ -689,11 +689,11 @@ export interface TsNodeDefinition {
             /**
              * Specify what module code is generated.
              */
-            module?: "CommonJS" | "AMD" | "System" | "UMD" | "ES6" | "ES2015" | "ES2020" | "ESNext" | "None" | "ES2022" | "Node12" | "NodeNext";
+            module?: "CommonJS" | "AMD" | "System" | "UMD" | "ES6" | "ES2015" | "ES2020" | "ESNext" | "None" | "ES2022" | "Node16" | "NodeNext";
             /**
              * Specify how TypeScript looks up a file from a given module specifier.
              */
-            moduleResolution?: "Classic" | "Node" | "Node12" | "NodeNext";
+            moduleResolution?: "Classic" | "Node" | "Node16" | "NodeNext";
             /**
              * Set the newline character for emitting files.
              */
