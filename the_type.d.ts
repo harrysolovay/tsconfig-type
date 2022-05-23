@@ -398,6 +398,12 @@ export interface CompilerOptionsDefinition {
             | "ES2021.WeakRef"
             | "ESNext.WeakRef"
             | "es2021.intl"
+            | "ES2022"
+            | "ES2022.Array"
+            | "ES2022.Error"
+            | "ES2022.Intl"
+            | "ES2022.Object"
+            | "ES2022.String"
         )[];
         /**
          * When type checking, take into account `null` and `undefined`.
@@ -992,6 +998,12 @@ export interface TsNodeDefinition {
                 | "ES2021.WeakRef"
                 | "ESNext.WeakRef"
                 | "es2021.intl"
+                | "ES2022"
+                | "ES2022.Array"
+                | "ES2022.Error"
+                | "ES2022.Intl"
+                | "ES2022.Object"
+                | "ES2022.String"
             )[];
             /**
              * When type checking, take into account `null` and `undefined`.
