@@ -1099,6 +1099,12 @@ export interface TsNodeDefinition {
          */
         emit?: boolean;
         /**
+         * Enable native ESM support.
+         *
+         * For details, see https://typestrong.org/ts-node/docs/imports#native-ecmascript-modules
+         */
+        esm?: boolean;
+        /**
          * Allows the usage of top level await in REPL.
          *
          * Uses node's implementation which accomplishes this with an AST syntax transformation.
@@ -1116,7 +1122,13 @@ export interface TsNodeDefinition {
          *
          * For details, see https://github.com/TypeStrong/ts-node/issues/1514
          */
-        experimentalResolverFeatures?: boolean;
+        experimentalResolver?: boolean;
+        /**
+         * Like node's `--experimental-specifier-resolution`, , but can also be set in your `tsconfig.json` for convenience.
+         *
+         * For details, see https://nodejs.org/dist/latest-v18.x/docs/api/esm.html#customizing-esm-specifier-resolution-algorithm
+         */
+        experimentalSpecifierResolution?: "explicit" | "node";
         /**
          * Load "files" and "include" from `tsconfig.json` on startup.
          *
@@ -1143,8 +1155,9 @@ export interface TsNodeDefinition {
         logError?: boolean;
         /**
          * Override certain paths to be compiled and executed as CommonJS or ECMAScript modules.
-         * When overridden, the tsconfig "module" and package.json "type" fields are overridden.
-         * This is useful because TypeScript files cannot use the .cjs nor .mjs file extensions;
+         * When overridden, the tsconfig "module" and package.json "type" fields are overridden, and
+         * the file extension is ignored.
+         * This is useful if you cannot use .mts, .cts, .mjs, or .cjs file extensions;
          * it achieves the same effect.
          *
          * Each key is a glob pattern following the same rules as tsconfig's "include" array.
