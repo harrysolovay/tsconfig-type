@@ -407,6 +407,10 @@ export interface CompilerOptionsDefinition {
             | "ES2022.String"
         )[];
         /**
+         * Specify how TypeScript determine a file as module.
+         */
+        moduleDetection?: "auto" | "legacy" | "force";
+        /**
          * When type checking, take into account `null` and `undefined`.
          */
         strictNullChecks?: boolean;
@@ -1007,6 +1011,10 @@ export interface TsNodeDefinition {
                 | "ES2022.Object"
                 | "ES2022.String"
             )[];
+            /**
+             * Specify how TypeScript determine a file as module.
+             */
+            moduleDetection?: "auto" | "legacy" | "force";
             /**
              * When type checking, take into account `null` and `undefined`.
              */
